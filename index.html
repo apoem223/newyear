@@ -1,0 +1,986 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>年度报告信封</title>
+    <link rel="stylesheet" href="/newyear/https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            -webkit-tap-highlight-color: transparent;
+        }
+
+        body {
+            font-family: "PingFang SC", "Helvetica Neue", Arial, sans-serif;
+            background: linear-gradient(135deg, #0a0a0a 0%, #1a1a1a 100%);
+            color: #fff;
+            line-height: 1.5;
+            max-width: 100%;
+            overflow-x: hidden;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+        }
+
+        .container {
+            width: 100%;
+            max-width: 500px;
+            margin: 0 auto;
+            position: relative;
+        }
+
+        /* 加载界面样式 */
+        .loading-screen {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(135deg, #000000 0%, #1a0000 100%);
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            z-index: 1000;
+            transition: opacity 0.5s ease, visibility 0.5s ease;
+        }
+
+        .loading-screen.hidden {
+            opacity: 0;
+            visibility: hidden;
+        }
+
+        .kaomoji-container {
+            text-align: center;
+            margin-bottom: 30px;
+        }
+
+        .kaomoji {
+            font-size: 4rem;
+            margin-bottom: 10px;
+            color: #ff0000;
+            display: inline-block;
+            animation: float 3s infinite ease-in-out;
+            text-shadow: 0 0 10px rgba(255, 0, 0, 0.5);
+        }
+
+        .loading-text {
+            font-size: 1.2rem;
+            color: rgba(255, 255, 255, 0.9);
+            margin-bottom: 30px;
+        }
+
+        .loading-dots {
+            display: flex;
+            gap: 10px;
+        }
+
+        .dot {
+            width: 14px;
+            height: 14px;
+            border-radius: 50%;
+            background-color: #ff0000;
+            animation: pulse 1.5s infinite ease-in-out;
+        }
+
+        .dot:nth-child(2) {
+            animation-delay: 0.2s;
+        }
+
+        .dot:nth-child(3) {
+            animation-delay: 0.4s;
+        }
+
+        @keyframes float {
+
+            0%,
+            100% {
+                transform: translateY(0);
+            }
+
+            50% {
+                transform: translateY(-15px);
+            }
+        }
+
+        @keyframes pulse {
+
+            0%,
+            100% {
+                transform: scale(1);
+                opacity: 0.7;
+            }
+
+            50% {
+                transform: scale(1.2);
+                opacity: 1;
+            }
+        }
+
+        /* 主界面样式 */
+        .main-content {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            opacity: 0;
+            animation: fadeIn 0.8s ease forwards 0.3s;
+            padding-top: 20px;
+        }
+
+        @keyframes fadeIn {
+            to {
+                opacity: 1;
+            }
+        }
+
+        .header {
+            text-align: center;
+            margin-bottom: 40px;
+            width: 100%;
+        }
+
+        .header h1 {
+            font-size: 2rem;
+            color: #fff;
+            margin-bottom: 10px;
+            font-weight: 600;
+            text-shadow: 0 0 10px rgba(255, 0, 0, 0.3);
+        }
+
+        .header p {
+            color: #aaa;
+            font-size: 1rem;
+        }
+
+        /* 信封样式 */
+        .envelope-container {
+            position: relative;
+            width: 280px;
+            height: 200px;
+            margin: 0 auto 40px;
+            perspective: 1000px;
+            cursor: pointer;
+        }
+
+        .envelope {
+            width: 100%;
+            height: 100%;
+            position: relative;
+            transform-style: preserve-3d;
+            transition: transform 1s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+        }
+
+        .envelope.open {
+            transform: rotateX(180deg);
+        }
+
+        .envelope-body {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(145deg, #2a0000, #1a0000);
+            border-radius: 12px;
+            box-shadow: 0 15px 35px rgba(0, 0, 0, 0.5);
+            backface-visibility: hidden;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            overflow: hidden;
+            border: 2px solid #ff0000;
+        }
+
+        .envelope-flap {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 50%;
+            background: linear-gradient(145deg, #ffffff, #cccccc);
+            clip-path: polygon(0 0, 50% 70%, 100% 0);
+            transform-origin: top;
+            transition: transform 0.8s ease;
+            z-index: 2;
+        }
+
+        .envelope.open .envelope-flap {
+            transform: rotateX(180deg);
+        }
+
+        .seal {
+            position: absolute;
+            bottom: 30px;
+            width: 80px;
+            height: 80px;
+            background: linear-gradient(135deg, #000000, #2a0000);
+            border-radius: 50%;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            color: #ff0000;
+            font-size: 2.5rem;
+            box-shadow: 0 8px 20px rgba(255, 0, 0, 0.3);
+            cursor: pointer;
+            z-index: 3;
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+            user-select: none;
+            border: 2px solid #ff0000;
+        }
+
+        .seal:hover {
+            transform: scale(1.05);
+            box-shadow: 0 10px 25px rgba(255, 0, 0, 0.5);
+        }
+
+        .seal:active {
+            transform: scale(0.95);
+        }
+
+        .seal-text {
+            font-size: 0.9rem;
+            font-weight: bold;
+            letter-spacing: 1px;
+        }
+
+        /* 信封内部（信件） */
+        .letter-content {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            background-color: #000;
+            border-radius: 12px;
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            transform: rotateX(180deg);
+            backface-visibility: hidden;
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.3);
+            overflow: hidden;
+        }
+
+        .letter-image {
+            max-width: 100%;
+            max-height: 100%;
+            object-fit: contain;
+            border-radius: 8px;
+            box-shadow: 0 5px 15px rgba(255, 0, 0, 0.2);
+            display: none;
+            cursor: pointer;
+            transition: transform 0.3s ease;
+        }
+
+        .letter-image:hover {
+            transform: scale(1.02);
+        }
+
+        .letter-placeholder {
+            width: 100%;
+            height: 100%;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            text-align: center;
+            padding: 20px;
+        }
+
+        .letter-placeholder i {
+            font-size: 3rem;
+            color: #ff0000;
+            margin-bottom: 15px;
+        }
+
+        .letter-placeholder p {
+            color: #aaa;
+            font-size: 1rem;
+        }
+
+        /* 图片全屏查看 */
+        .image-viewer {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.95);
+            display: none;
+            justify-content: center;
+            align-items: center;
+            z-index: 3000;
+            flex-direction: column;
+        }
+
+        .image-viewer.active {
+            display: flex;
+        }
+
+        .full-image {
+            max-width: 90%;
+            max-height: 80%;
+            object-fit: contain;
+            border-radius: 10px;
+            box-shadow: 0 10px 30px rgba(255, 0, 0, 0.3);
+        }
+
+        .image-controls {
+            margin-top: 20px;
+            display: flex;
+            gap: 20px;
+        }
+
+        .image-btn {
+            background: #ff0000;
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 8px;
+            font-size: 1rem;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            transition: all 0.3s ease;
+        }
+
+        .image-btn:hover {
+            background: #cc0000;
+            transform: translateY(-2px);
+        }
+
+        .close-viewer {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            background: rgba(255, 255, 255, 0.1);
+            color: white;
+            border: none;
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            font-size: 1.5rem;
+            cursor: pointer;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+
+        /* 密码对话框样式 */
+        .modal-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.8);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 2000;
+            opacity: 0;
+            visibility: hidden;
+            transition: opacity 0.3s ease, visibility 0.3s ease;
+        }
+
+        .modal-overlay.active {
+            opacity: 1;
+            visibility: visible;
+        }
+
+        .modal {
+            background-color: #111;
+            border-radius: 16px;
+            width: 85%;
+            max-width: 340px;
+            padding: 30px;
+            box-shadow: 0 20px 40px rgba(255, 0, 0, 0.2);
+            text-align: center;
+            transform: translateY(30px);
+            transition: transform 0.4s ease;
+            border: 1px solid #ff0000;
+        }
+
+        .modal-overlay.active .modal {
+            transform: translateY(0);
+        }
+
+        .modal h3 {
+            font-size: 1.4rem;
+            color: #fff;
+            margin-bottom: 15px;
+        }
+
+        .modal p {
+            color: #aaa;
+            margin-bottom: 25px;
+            font-size: 1rem;
+        }
+
+        .password-input-container {
+            position: relative;
+            margin-bottom: 25px;
+        }
+
+        .password-input {
+            width: 100%;
+            padding: 15px 20px;
+            border-radius: 10px;
+            border: 2px solid #ff0000;
+            font-size: 1.1rem;
+            text-align: center;
+            letter-spacing: 8px;
+            background-color: #222;
+            color: white;
+            transition: border-color 0.3s ease;
+        }
+
+        .password-input:focus {
+            outline: none;
+            border-color: #ff4444;
+            box-shadow: 0 0 0 3px rgba(255, 0, 0, 0.1);
+        }
+
+        .password-hint {
+            font-size: 0.85rem;
+            color: #aaa;
+            margin-top: 10px;
+            text-align: center;
+        }
+
+        .modal-buttons {
+            display: flex;
+            justify-content: center;
+            gap: 15px;
+        }
+
+        .modal-btn {
+            padding: 14px 28px;
+            border-radius: 10px;
+            font-size: 1rem;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            border: none;
+            outline: none;
+            flex: 1;
+        }
+
+        .confirm-btn {
+            background: linear-gradient(135deg, #ff0000, #cc0000);
+            color: white;
+        }
+
+        .confirm-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 7px 15px rgba(255, 0, 0, 0.3);
+        }
+
+        .cancel-btn {
+            background-color: #333;
+            color: #fff;
+        }
+
+        .cancel-btn:hover {
+            background-color: #444;
+        }
+
+        /* 音乐播放器 */
+        .music-player {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            width: 50px;
+            height: 50px;
+            background: #ff0000;
+            border-radius: 50%;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            color: white;
+            font-size: 1.5rem;
+            cursor: pointer;
+            z-index: 100;
+            box-shadow: 0 5px 15px rgba(255, 0, 0, 0.3);
+            transition: all 0.3s ease;
+        }
+
+        .music-player:hover {
+            transform: scale(1.1);
+        }
+
+        .music-player.playing {
+            animation: pulse-red 1.5s infinite;
+        }
+
+        @keyframes pulse-red {
+            0% {
+                box-shadow: 0 0 0 0 rgba(255, 0, 0, 0.7);
+            }
+
+            70% {
+                box-shadow: 0 0 0 15px rgba(255, 0, 0, 0);
+            }
+
+            100% {
+                box-shadow: 0 0 0 0 rgba(255, 0, 0, 0);
+            }
+        }
+
+        .music-info {
+            position: fixed;
+            bottom: 80px;
+            right: 20px;
+            background: rgba(0, 0, 0, 0.8);
+            border: 1px solid #ff0000;
+            border-radius: 10px;
+            padding: 10px 15px;
+            color: white;
+            font-size: 0.9rem;
+            max-width: 200px;
+            display: none;
+            z-index: 100;
+        }
+
+        .music-info.active {
+            display: block;
+        }
+
+        /* 响应式调整 */
+        @media (max-width: 480px) {
+            .envelope-container {
+                width: 260px;
+                height: 190px;
+            }
+
+            .kaomoji {
+                font-size: 3.2rem;
+            }
+
+            .header h1 {
+                font-size: 1.8rem;
+            }
+
+            .seal {
+                width: 70px;
+                height: 70px;
+                font-size: 2.2rem;
+            }
+
+            .modal {
+                padding: 25px;
+            }
+
+            .music-player {
+                bottom: 15px;
+                right: 15px;
+                width: 45px;
+                height: 45px;
+            }
+        }
+
+        @media (max-width: 350px) {
+            .envelope-container {
+                width: 240px;
+                height: 180px;
+            }
+
+            .seal {
+                width: 65px;
+                height: 65px;
+                font-size: 2rem;
+            }
+        }
+    </style>
+</head>
+
+<body>
+    <!-- 加载界面 -->
+    <div class="loading-screen" id="loadingScreen">
+        <div class="kaomoji-container">
+            <div class="kaomoji">(◕‿◕)♡</div>
+            <div class="loading-text">你的年度报告正在派送中...</div>
+        </div>
+        <div class="loading-dots">
+            <div class="dot"></div>
+            <div class="dot"></div>
+            <div class="dot"></div>
+        </div>
+    </div>
+
+    <!-- 主内容区域 -->
+    <div class="container">
+        <div class="main-content">
+            <div class="header">
+                <h1>请查收你的年度报告</h1>
+                <p>输入正确密码,查收专属你的年度报告</p>
+            </div>
+
+            <div class="envelope-container">
+                <div class="envelope" id="envelope">
+                    <!-- 信封正面 -->
+                    <div class="envelope-body">
+                        <div class="envelope-flap"></div>
+                        <div class="seal" id="seal">
+                            <div class="seal-text">open</div>
+                        </div>
+                    </div>
+
+                    <!-- 信封内部（信件） -->
+                    <div class="letter-content">
+                        <div class="letter-placeholder" id="letterPlaceholder">
+                            <i class="fas fa-lock"></i>
+                            <p>请输入密码查看报告内容</p>
+                        </div>
+                        <img id="letterImage" class="letter-image" alt="年度报告">
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 图片全屏查看 -->
+    <div class="image-viewer" id="imageViewer">
+        <button class="close-viewer" id="closeViewer">×</button>
+        <img id="fullImage" class="full-image" alt="年度报告大图">
+        <div class="image-controls">
+            <button class="image-btn" id="saveImageBtn">
+                <i class="fas fa-download"></i> 保存图片
+            </button>
+        </div>
+    </div>
+
+    <!-- 密码输入对话框 -->
+    <div class="modal-overlay" id="modalOverlay">
+        <div class="modal">
+            <h3>请输入密码</h3>
+            <p>输入四位数字密码打开对应的报告</p>
+
+            <div class="password-input-container">
+                <input type="tel" class="password-input" id="passwordInput" maxlength="4" placeholder="输入4位数字"
+                    pattern="[0-9]*" inputmode="numeric">
+                <div class="error-message" id="errorMessage"></div>
+            </div>
+
+            <div class="modal-buttons">
+                <button class="modal-btn cancel-btn" id="cancelBtn">取消</button>
+                <button class="modal-btn confirm-btn" id="confirmBtn">确认</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- 音乐播放器 -->
+    <div class="music-player" id="musicPlayer">
+        <i class="fas fa-play" id="musicIcon"></i>
+    </div>
+    <div class="music-info" id="musicInfo"></div>
+
+    <!-- 音频元素 -->
+    <audio id="backgroundMusic" loop></audio>
+
+    <script>
+        // DOM元素引用
+        const loadingScreen = document.getElementById('loadingScreen');
+        const envelope = document.getElementById('envelope');
+        const seal = document.getElementById('seal');
+        const modalOverlay = document.getElementById('modalOverlay');
+        const confirmBtn = document.getElementById('confirmBtn');
+        const cancelBtn = document.getElementById('cancelBtn');
+        const passwordInput = document.getElementById('passwordInput');
+        const errorMessage = document.getElementById('errorMessage');
+        const letterImage = document.getElementById('letterImage');
+        const letterPlaceholder = document.getElementById('letterPlaceholder');
+        const imageViewer = document.getElementById('imageViewer');
+        const fullImage = document.getElementById('fullImage');
+        const closeViewer = document.getElementById('closeViewer');
+        const saveImageBtn = document.getElementById('saveImageBtn');
+        const musicPlayer = document.getElementById('musicPlayer');
+        const musicIcon = document.getElementById('musicIcon');
+        const musicInfo = document.getElementById('musicInfo');
+        const backgroundMusic = document.getElementById('backgroundMusic');
+
+        // 当前状态
+        let currentPassword = '';
+        let isMusicPlaying = false;
+
+        // 密码与内容的映射关系
+        const passwordMap = {
+            '0809': {
+                image: 'images/letter1.jpg',
+                music: 'music/music1.mp3',
+                title: '年度报告 - 0809'
+            },
+            '0204': {
+                image: 'images/letter2.jpg',
+                music: 'music/music2.mp3',
+                title: '年度报告 - 0204'
+            },
+            '0908': {
+                image: 'images/letter3.jpg',
+                music: 'music/music3.mp3',
+                title: '年度报告 - 0908'
+            },
+            '0605': {
+                image: 'images/letter4.jpg',
+                music: 'music/music4.mp3',
+                title: '年度报告 - 0605'
+            },
+            '0927': {
+                image: 'images/letter5.jpg',
+                music: 'music/music5.mp3',
+                title: '年度报告 - 0927'
+            },
+            '0430': {
+                image: 'images/letter6.jpg',
+                music: 'music/music6.mp3',
+                title: '年度报告 - 0430'
+            }
+        };
+
+        // 颜文字数组
+        const kaomojis = ['(◕‿◕)♡', '(◠‿◠)✌', '(ﾉ◕ヮ◕)ﾉ*:･ﾟ✧', 'ヽ(・∀・)ﾉ', '(づ｡◕‿‿◕｡)づ', '(●´ω｀●)'];
+
+        // 模拟加载过程
+        window.addEventListener('load', function () {
+            // 随机选择一个颜文字
+            const kaomojiElement = document.querySelector('.kaomoji');
+            const randomKaomoji = kaomojis[Math.floor(Math.random() * kaomojis.length)];
+            kaomojiElement.textContent = randomKaomoji;
+
+            // 延迟2秒后隐藏加载界面，模拟加载过程
+            setTimeout(function () {
+                loadingScreen.classList.add('hidden');
+            }, 2000);
+        });
+
+        // 点击印章显示密码输入对话框
+        seal.addEventListener('click', function () {
+            modalOverlay.classList.add('active');
+            passwordInput.focus();
+            passwordInput.value = '';
+            errorMessage.classList.remove('show');
+        });
+
+        // 确认按钮点击事件
+        confirmBtn.addEventListener('click', function () {
+            const password = passwordInput.value.trim();
+
+            // 验证密码
+            if (password.length !== 4) {
+                showError('请输入4位数字密码');
+                return;
+            }
+
+            if (!passwordMap[password]) {
+                showError('密码错误，请重新输入');
+                return;
+            }
+
+            // 密码正确，处理信件打开
+            currentPassword = password;
+            handleCorrectPassword(password);
+        });
+
+        // 取消按钮点击事件
+        cancelBtn.addEventListener('click', function () {
+            modalOverlay.classList.remove('active');
+        });
+
+        // 点击对话框外部关闭对话框
+        modalOverlay.addEventListener('click', function (e) {
+            if (e.target === modalOverlay) {
+                modalOverlay.classList.remove('active');
+            }
+        });
+
+        // 输入框回车键支持
+        passwordInput.addEventListener('keypress', function (e) {
+            if (e.key === 'Enter') {
+                confirmBtn.click();
+            }
+        });
+
+        // 输入框内容变化时隐藏错误信息
+        passwordInput.addEventListener('input', function () {
+            errorMessage.classList.remove('show');
+        });
+
+        // 密码正确时的处理函数
+        function handleCorrectPassword(password) {
+            // 隐藏对话框
+            modalOverlay.classList.remove('active');
+
+            // 显示加载状态
+            letterPlaceholder.innerHTML = '<i class="fas fa-spinner fa-spin"></i><p>正在加载年度报告...</p>';
+
+            // 根据密码获取对应的内容
+            const content = passwordMap[password];
+
+            // 加载图片
+            setTimeout(function () {
+                letterImage.src = content.image;
+                letterImage.alt = content.title;
+                letterImage.dataset.fullImage = content.image;
+
+                // 图片加载完成后显示
+                letterImage.onload = function () {
+                    letterImage.style.display = 'block';
+                    letterPlaceholder.style.display = 'none';
+
+                    // 添加信封打开效果
+                    envelope.classList.add('open');
+
+                    // 添加视觉反馈
+                    seal.style.background = 'linear-gradient(135deg, #00aa00, #008800)';
+                    seal.innerHTML = '<i class="fas fa-check"></i>';
+
+                    // 设置并播放音乐
+                    setupMusic(content.music, content.title);
+                };
+
+                // 如果图片加载失败，显示错误信息
+                letterImage.onerror = function () {
+                    letterPlaceholder.innerHTML = '<i class="fas fa-exclamation-triangle"></i><p>报告加载失败<br><small>请检查网络连接</small></p>';
+                };
+            }, 800);
+        }
+
+        // 设置并播放音乐
+        function setupMusic(musicUrl, title) {
+            backgroundMusic.src = musicUrl;
+            backgroundMusic.load();
+
+            // 更新音乐信息
+            musicInfo.textContent = title;
+            musicInfo.classList.add('active');
+
+            // 自动播放音乐（微信可能需要用户交互）
+            setTimeout(() => {
+                playMusic();
+            }, 500);
+        }
+
+        // 播放/暂停音乐
+        function toggleMusic() {
+            if (isMusicPlaying) {
+                pauseMusic();
+            } else {
+                playMusic();
+            }
+        }
+
+        // 播放音乐
+        function playMusic() {
+            backgroundMusic.play().then(() => {
+                isMusicPlaying = true;
+                musicIcon.className = 'fas fa-pause';
+                musicPlayer.classList.add('playing');
+            }).catch(error => {
+                console.log('播放音乐失败:', error);
+                // 显示提示，需要用户交互
+                musicInfo.textContent = '点击播放按钮开始音乐';
+            });
+        }
+
+        // 暂停音乐
+        function pauseMusic() {
+            backgroundMusic.pause();
+            isMusicPlaying = false;
+            musicIcon.className = 'fas fa-play';
+            musicPlayer.classList.remove('playing');
+        }
+
+        // 点击图片查看大图
+        letterImage.addEventListener('click', function () {
+            if (letterImage.style.display === 'block') {
+                fullImage.src = letterImage.src;
+                fullImage.alt = letterImage.alt;
+                imageViewer.classList.add('active');
+            }
+        });
+
+        // 关闭图片查看器
+        closeViewer.addEventListener('click', function () {
+            imageViewer.classList.remove('active');
+        });
+
+        // 点击图片查看器外部关闭
+        imageViewer.addEventListener('click', function (e) {
+            if (e.target === imageViewer) {
+                imageViewer.classList.remove('active');
+            }
+        });
+
+        // 保存图片
+        saveImageBtn.addEventListener('click', function () {
+            const link = document.createElement('a');
+            link.href = fullImage.src;
+            link.download = `年度报告_${currentPassword}.jpg`;
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+
+            // 显示保存成功提示
+            const originalText = saveImageBtn.innerHTML;
+            saveImageBtn.innerHTML = '<i class="fas fa-check"></i> 保存成功';
+            saveImageBtn.style.background = '#00aa00';
+
+            setTimeout(() => {
+                saveImageBtn.innerHTML = originalText;
+                saveImageBtn.style.background = '';
+            }, 2000);
+        });
+
+        // 音乐播放器点击事件
+        musicPlayer.addEventListener('click', toggleMusic);
+
+        // 显示错误信息
+        function showError(message) {
+            errorMessage.textContent = message;
+            errorMessage.classList.add('show');
+
+            // 输入框震动效果
+            passwordInput.style.borderColor = '#ff0000';
+            setTimeout(() => {
+                passwordInput.style.borderColor = '#ff0000';
+            }, 500);
+
+            // 清空输入框并重新聚焦
+            passwordInput.value = '';
+            passwordInput.focus();
+        }
+
+        // 为微信端优化：防止双击放大
+        let lastTouchEnd = 0;
+        document.addEventListener('touchend', function (event) {
+            const now = Date.now();
+            if (now - lastTouchEnd <= 300) {
+                event.preventDefault();
+            }
+            lastTouchEnd = now;
+        }, false);
+
+        // 防止下拉刷新
+        document.body.addEventListener('touchmove', function (e) {
+            if (e.scale !== 1) { e.preventDefault(); }
+        }, { passive: false });
+
+        // 微信中自动播放音乐需要用户交互
+        document.addEventListener('click', function () {
+            if (backgroundMusic.src && !isMusicPlaying) {
+                // 尝试播放音乐
+                playMusic();
+            }
+        }, { once: true });
+    </script>
+</body>
+
+</html>
